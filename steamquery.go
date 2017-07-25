@@ -38,6 +38,15 @@ type Response struct {
 	Environment Environment
 	Private     bool
 	VAC         bool
+	Version     string // Version of the game installed on the server.
+	Port        uint16 // The server's game port number.
+	SteamID     uint64 // Server's SteamID.
+	SourceTV    struct {
+		Port uint16 // Spectator port number
+		Name string // Name of the spectator server
+	}
+	Keywords string // Tags that describe the game according to the server
+	GameID   uint64 // The server's 64-bit GameID.
 }
 
 func Query(address *net.UDPAddr) (Response, error) {
@@ -46,7 +55,7 @@ func Query(address *net.UDPAddr) (Response, error) {
 		return Response{}, err
 	}
 	c.Write([]byte("\xFF\xFF\xFF\xFFTSource Engine Query\x00"))
-	var buf [1024]byte
+	var buf [2 * 1024]byte
 	n, _ := c.Read(buf[:])
 	c.Close()
 	if n <= 0 {
@@ -99,6 +108,46 @@ func Query(address *net.UDPAddr) (Response, error) {
 	r.Private = buf[o] == 1
 	o++
 	r.VAC = buf[o] == 1
+	o++
+	// EXTRA STUFF FOR "The Ship" not handled here
+	nb = bytes.IndexByte(buf[o:], 0)
+	if nb == -1 {
+		return Response{}, errors.New("got invalid response")
+	}
+	r.Version = string(buf[o : o+nb])
+	o += nb + 1
+	extra := buf[o]
+	o++
+	if extra&0x80 != 0 {
+		r.Port = binary.LittleEndian.Uint16(buf[o:])
+		o += 2
+	}
+	if extra&0x10 != 0 {
+		r.SteamID = binary.LittleEndian.Uint64(buf[o:])
+		o += 8
+	}
+	if extra&0x40 != 0 {
+		r.SourceTV.Port = binary.LittleEndian.Uint16(buf[o:])
+		o += 2
+		nb = bytes.IndexByte(buf[o:], 0)
+		if nb == -1 {
+			return Response{}, errors.New("got invalid response")
+		}
+		r.SourceTV.Name = string(buf[o : o+nb])
+		o += nb + 1
+	}
+	if extra&0x20 != 0 {
+		nb = bytes.IndexByte(buf[o:], 0)
+		if nb == -1 {
+			return Response{}, errors.New("got invalid response")
+		}
+		r.Keywords = string(buf[o : o+nb])
+		o += nb + 1
+	}
+	if extra&0x01 != 0 {
+		r.GameID = binary.LittleEndian.Uint64(buf[o:])
+		o += 8
+	}
 	return r, nil
 }
 
