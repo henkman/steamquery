@@ -4,8 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"sort"
 
+	"github.com/hako/durafmt"
+	"github.com/henkman/clitable"
 	"github.com/henkman/steamquery"
 )
 
@@ -26,6 +29,20 @@ type SortPlayerByScore []steamquery.Player
 func (a SortPlayerByScore) Len() int           { return len(a) }
 func (a SortPlayerByScore) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a SortPlayerByScore) Less(i, j int) bool { return a[i].Score > a[j].Score }
+
+type PlayerRow steamquery.Player
+
+func (p PlayerRow) GetValue(i int) string {
+	switch i {
+	case 0:
+		return p.Name
+	case 1:
+		return fmt.Sprint(p.Score)
+	case 2:
+		return durafmt.Parse(p.Duration).String()
+	}
+	panic("invalid index")
+}
 
 func init() {
 	flag.BoolVar(&_dontprintplayer, "np", false, "don't print player names")
@@ -76,9 +93,12 @@ func main() {
 		} else {
 			sort.Sort(SortPlayerByScore(ps))
 		}
-		for _, p := range ps {
-			fmt.Printf("\t%s -> %d - %f secs playing\n",
-				p.Name, p.Score, p.Duration)
+		rows := make([]clitable.Row, len(ps))
+		for i, p := range ps {
+			rows[i] = PlayerRow(p)
 		}
+		clitable.Write(os.Stdout,
+			[]string{"Name", "Score", "Online"},
+			rows)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 	"net"
+	"time"
 )
 
 type ServerType byte
@@ -53,7 +54,7 @@ type Response struct {
 type Player struct {
 	Name     string
 	Score    int32
-	Duration float32
+	Duration time.Duration
 }
 
 func Query(address *net.UDPAddr) (Response, error) {
@@ -199,8 +200,8 @@ func QueryPlayers(address *net.UDPAddr) ([]Player, error) {
 		o += nb + 1
 		p.Score = int32(binary.LittleEndian.Uint32(buf[o:]))
 		o += 4
-		dur := binary.LittleEndian.Uint32(buf[o:])
-		p.Duration = math.Float32frombits(dur)
+		dur := math.Float32frombits(binary.LittleEndian.Uint32(buf[o:]))
+		p.Duration = time.Duration(dur * 1000 * 1000 * 1000)
 		o += 4
 		if len(p.Name) != 0 {
 			players = append(players, p)
