@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"math"
 	"net"
 )
 
@@ -47,6 +48,12 @@ type Response struct {
 	}
 	Keywords string // Tags that describe the game according to the server
 	GameID   uint64 // The server's 64-bit GameID.
+}
+
+type Player struct {
+	Name     string
+	Score    int32
+	Duration float32
 }
 
 func Query(address *net.UDPAddr) (Response, error) {
@@ -157,4 +164,55 @@ func QueryString(address string) (Response, error) {
 		return Response{}, err
 	}
 	return Query(addr)
+}
+
+func QueryPlayers(address *net.UDPAddr) ([]Player, error) {
+	c, err := net.DialUDP("udp", nil, address)
+	if err != nil {
+		return nil, err
+	}
+	c.Write([]byte("\xFF\xFF\xFF\xFFU\xFF\xFF\xFF\xFF"))
+	var buf [2 * 1024]byte
+	n, _ := c.Read(buf[:])
+	if n < 9 {
+		return nil, errors.New("got invalid response")
+	}
+	buf[4] = 'U'
+	c.Write(buf[:n])
+	n, _ = c.Read(buf[:])
+	if n < 2 {
+		return nil, errors.New("got invalid response")
+	}
+	c.Close()
+	o := 5 // skip "\xFF\xFF\xFF\xFFD"
+	np := buf[o]
+	o++
+	players := make([]Player, 0, np)
+	for i := byte(0); i < np; i++ {
+		var p Player
+		o++ // skip index
+		nb := bytes.IndexByte(buf[o:], 0)
+		if nb == -1 {
+			return nil, errors.New("got invalid response")
+		}
+		p.Name = string(buf[o : o+nb])
+		o += nb + 1
+		p.Score = int32(binary.LittleEndian.Uint32(buf[o:]))
+		o += 4
+		dur := binary.LittleEndian.Uint32(buf[o:])
+		p.Duration = math.Float32frombits(dur)
+		o += 4
+		if len(p.Name) != 0 {
+			players = append(players, p)
+		}
+	}
+	return players, nil
+}
+
+func QueryPlayersString(address string) ([]Player, error) {
+	addr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return nil, err
+	}
+	return QueryPlayers(addr)
 }
