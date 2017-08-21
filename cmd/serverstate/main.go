@@ -40,6 +40,8 @@ func (p PlayerRow) GetValue(i int) string {
 		return fmt.Sprint(p.Score)
 	case 2:
 		return durafmt.Parse(p.Duration).String()
+	case 3:
+		return fmt.Sprint(float32(p.Score) / float32(p.Duration.Seconds()))
 	}
 	panic("invalid index")
 }
@@ -98,7 +100,7 @@ func main() {
 			rows[i] = PlayerRow(p)
 		}
 		clitable.Write(os.Stdout,
-			[]string{"Name", "Score", "Online"},
+			[]string{"Name", "Score", "Online", "Score/Second"},
 			rows)
 	}
 }
