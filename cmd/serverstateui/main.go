@@ -15,6 +15,8 @@ import (
 )
 
 func Players(ctx *fasthttp.RequestCtx) {
+	ctx.Response.Header.Set("Content-Type", "application/json")
+	ctx.Response.Header.Set("Cache-Control", "No-Cache")
 	server := ctx.UserValue("server").(string)
 	ps, err := steamquery.QueryPlayersString(server)
 	if err != nil {
@@ -25,6 +27,8 @@ func Players(ctx *fasthttp.RequestCtx) {
 }
 
 func Info(ctx *fasthttp.RequestCtx) {
+	ctx.Response.Header.Set("Content-Type", "application/json")
+	ctx.Response.Header.Set("Cache-Control", "No-Cache")
 	server := ctx.UserValue("server").(string)
 	res, err := steamquery.QueryString(server)
 	if err != nil {
@@ -58,9 +62,14 @@ func Index(server string) fasthttp.RequestHandler {
 	<script>
 	function updateInfo() {
 		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange=function() {
-			if (this.readyState == 4 && this.status == 200) {				
+		xhr.onreadystatechange = function() {
+			var DONE = this.DONE || 4;
+			if (this.readyState == DONE) {				
 				var raw = JSON.parse(this.responseText);
+				if(raw.error) {
+					alert(raw.error);
+					return;
+				}
 				document.getElementById("name").innerText = raw.Name;
 				document.getElementById("map").innerText = raw.Map;
 				document.getElementById("playercount").innerText = raw.Players;
@@ -71,12 +80,17 @@ func Index(server string) fasthttp.RequestHandler {
 	}
 	function updatePlayers() {
 		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange=function() {
-			if (this.readyState == 4 && this.status == 200) {			
+		xhr.onreadystatechange = function() {
+			var DONE = this.DONE || 4;
+			if (this.readyState == DONE) {			
+				var raw = JSON.parse(this.responseText);
+				if(raw.error) {
+					alert(raw.error);
+					return;
+				}
 				var table = document.querySelector("#players");
 				var tbody = table.querySelector("tbody");
 				tbody.innerHTML = "";
-				var raw = JSON.parse(this.responseText);
 				for(var i=0; i<raw.length; i++) {
 					var d = raw[i].Duration;
 					var secs = (d/1000000000) + (d%1000000000)/1000000000;
