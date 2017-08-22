@@ -20,7 +20,7 @@ func Players(ctx *fasthttp.RequestCtx) {
 	server := ctx.UserValue("server").(string)
 	ps, err := steamquery.QueryPlayersString(server)
 	if err != nil {
-		ctx.Response.SetBodyString("{'error':" + err.Error() + "}")
+		ctx.Response.SetBodyString("{'error':'" + err.Error() + "'}")
 		return
 	}
 	json.NewEncoder(ctx.Response.BodyWriter()).Encode(&ps)
@@ -32,7 +32,7 @@ func Info(ctx *fasthttp.RequestCtx) {
 	server := ctx.UserValue("server").(string)
 	res, err := steamquery.QueryString(server)
 	if err != nil {
-		ctx.Response.SetBodyString("{'error':" + err.Error() + "}")
+		ctx.Response.SetBodyString("{'error':'" + err.Error() + "'}")
 		return
 	}
 	json.NewEncoder(ctx.Response.BodyWriter()).Encode(&res)
@@ -57,8 +57,8 @@ func Index(server string) fasthttp.RequestHandler {
 		padding: 2px;
 	}
 	</style>
-	<script src="/r/sorttable.js"></script>
-	<script src="/r/juration.js"></script>
+	<script src="/r/sorttable.min.js"></script>
+	<script src="/r/juration.min.js"></script>
 	<script>
 	function updateInfo() {
 		var xhr = new XMLHttpRequest();
