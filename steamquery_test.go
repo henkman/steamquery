@@ -8,7 +8,7 @@ import (
 const TESTSERV = "109.70.149.165:27095"
 
 func TestQueryString(t *testing.T) {
-	r, err := QueryString(TESTSERV)
+	r, err := QueryInfoString(TESTSERV)
 	if err != nil {
 		t.Fatal(err)
 	}

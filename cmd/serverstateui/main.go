@@ -30,7 +30,7 @@ func Info(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.Set("Content-Type", "application/json")
 	ctx.Response.Header.Set("Cache-Control", "No-Cache")
 	server := ctx.UserValue("server").(string)
-	res, err := steamquery.QueryString(server)
+	res, err := steamquery.QueryInfoString(server)
 	if err != nil {
 		ctx.Response.SetBodyString("{'error':'" + err.Error() + "'}")
 		return

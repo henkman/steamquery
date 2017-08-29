@@ -58,7 +58,7 @@ func main() {
 		flag.Usage()
 		return
 	}
-	r, err := steamquery.QueryString(_server)
+	r, err := steamquery.QueryInfoString(_server)
 	if err != nil {
 		log.Fatal(err)
 	}

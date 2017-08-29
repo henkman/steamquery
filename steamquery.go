@@ -26,7 +26,7 @@ const (
 )
 
 // https://developer.valvesoftware.com/wiki/Source_Server_Queries#Response_Format
-type Response struct {
+type Info struct {
 	Protocol    byte   // Protocol version used by the server.
 	Name        string // Name of the server.
 	Map         string // Map the server has currently loaded.
@@ -57,43 +57,43 @@ type Player struct {
 	Duration time.Duration
 }
 
-func Query(address *net.UDPAddr) (Response, error) {
+func QueryInfo(address *net.UDPAddr) (Info, error) {
 	c, err := net.DialUDP("udp", nil, address)
 	if err != nil {
-		return Response{}, err
+		return Info{}, err
 	}
 	c.Write([]byte("\xFF\xFF\xFF\xFFTSource Engine Query\x00"))
 	var buf [2 * 1024]byte
 	n, _ := c.Read(buf[:])
 	c.Close()
 	if n <= 0 {
-		return Response{}, errors.New("got invalid response")
+		return Info{}, errors.New("got invalid response")
 	}
-	var r Response
+	var r Info
 	o := 5 // skip "\xFF\xFF\xFF\xFFI"
 	r.Protocol = buf[o]
 	o++
 	nb := bytes.IndexByte(buf[o:], 0)
 	if nb == -1 {
-		return Response{}, errors.New("got invalid response")
+		return Info{}, errors.New("got invalid response")
 	}
 	r.Name = string(buf[o : o+nb])
 	o += nb + 1
 	nb = bytes.IndexByte(buf[o:], 0)
 	if nb == -1 {
-		return Response{}, errors.New("got invalid response")
+		return Info{}, errors.New("got invalid response")
 	}
 	r.Map = string(buf[o : o+nb])
 	o += nb + 1
 	nb = bytes.IndexByte(buf[o:], 0)
 	if nb == -1 {
-		return Response{}, errors.New("got invalid response")
+		return Info{}, errors.New("got invalid response")
 	}
 	r.Folder = string(buf[o : o+nb])
 	o += nb + 1
 	nb = bytes.IndexByte(buf[o:], 0)
 	if nb == -1 {
-		return Response{}, errors.New("got invalid response")
+		return Info{}, errors.New("got invalid response")
 	}
 	r.Game = string(buf[o : o+nb])
 	o += nb + 1
@@ -120,7 +120,7 @@ func Query(address *net.UDPAddr) (Response, error) {
 	// EXTRA STUFF FOR "The Ship" not handled here
 	nb = bytes.IndexByte(buf[o:], 0)
 	if nb == -1 {
-		return Response{}, errors.New("got invalid response")
+		return Info{}, errors.New("got invalid response")
 	}
 	r.Version = string(buf[o : o+nb])
 	o += nb + 1
@@ -139,7 +139,7 @@ func Query(address *net.UDPAddr) (Response, error) {
 		o += 2
 		nb = bytes.IndexByte(buf[o:], 0)
 		if nb == -1 {
-			return Response{}, errors.New("got invalid response")
+			return Info{}, errors.New("got invalid response")
 		}
 		r.SourceTV.Name = string(buf[o : o+nb])
 		o += nb + 1
@@ -147,7 +147,7 @@ func Query(address *net.UDPAddr) (Response, error) {
 	if extra&0x20 != 0 {
 		nb = bytes.IndexByte(buf[o:], 0)
 		if nb == -1 {
-			return Response{}, errors.New("got invalid response")
+			return Info{}, errors.New("got invalid response")
 		}
 		r.Keywords = string(buf[o : o+nb])
 		o += nb + 1
@@ -159,12 +159,12 @@ func Query(address *net.UDPAddr) (Response, error) {
 	return r, nil
 }
 
-func QueryString(address string) (Response, error) {
+func QueryInfoString(address string) (Info, error) {
 	addr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
-		return Response{}, err
+		return Info{}, err
 	}
-	return Query(addr)
+	return QueryInfo(addr)
 }
 
 func QueryPlayers(address *net.UDPAddr) ([]Player, error) {
