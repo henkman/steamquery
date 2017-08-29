@@ -20,7 +20,7 @@ func Players(ctx *fasthttp.RequestCtx) {
 	server := ctx.UserValue("server").(string)
 	ps, err := steamquery.QueryPlayersString(server)
 	if err != nil {
-		ctx.Response.SetBodyString("{'error':'" + err.Error() + "'}")
+		ctx.Response.SetBodyString(`{"error":"` + err.Error() + `"}`)
 		return
 	}
 	json.NewEncoder(ctx.Response.BodyWriter()).Encode(&ps)
@@ -32,7 +32,7 @@ func Info(ctx *fasthttp.RequestCtx) {
 	server := ctx.UserValue("server").(string)
 	res, err := steamquery.QueryInfoString(server)
 	if err != nil {
-		ctx.Response.SetBodyString("{'error':'" + err.Error() + "'}")
+		ctx.Response.SetBodyString(`{"error":"` + err.Error() + `"}`)
 		return
 	}
 	json.NewEncoder(ctx.Response.BodyWriter()).Encode(&res)
