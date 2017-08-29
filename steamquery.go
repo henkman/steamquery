@@ -57,6 +57,11 @@ type Player struct {
 	Duration time.Duration
 }
 
+type Rule struct {
+	Name  string
+	Value string
+}
+
 func QueryInfo(address *net.UDPAddr) (Info, error) {
 	c, err := net.DialUDP("udp", nil, address)
 	if err != nil {
@@ -64,9 +69,13 @@ func QueryInfo(address *net.UDPAddr) (Info, error) {
 	}
 	c.Write([]byte("\xFF\xFF\xFF\xFFTSource Engine Query\x00"))
 	var buf [2 * 1024]byte
-	n, _ := c.Read(buf[:])
+	c.SetReadDeadline(time.Now().Add(time.Second * 3))
+	n, err := c.Read(buf[:])
+	if err != nil {
+		return Info{}, err
+	}
 	c.Close()
-	if n <= 0 {
+	if n < 17 {
 		return Info{}, errors.New("got invalid response")
 	}
 	var r Info
@@ -174,14 +183,21 @@ func QueryPlayers(address *net.UDPAddr) ([]Player, error) {
 	}
 	c.Write([]byte("\xFF\xFF\xFF\xFFU\xFF\xFF\xFF\xFF"))
 	var buf [2 * 1024]byte
-	n, _ := c.Read(buf[:])
-	if n < 9 {
-		return nil, errors.New("got invalid response")
+	c.SetReadDeadline(time.Now().Add(time.Second * 3))
+	n, err := c.Read(buf[:])
+	if err != nil {
+		return nil, err
 	}
-	buf[4] = 'U'
-	c.Write(buf[:n])
-	n, _ = c.Read(buf[:])
-	if n < 2 {
+	if n == 9 && buf[4] == 'A' {
+		buf[4] = 'U'
+		c.Write(buf[:n])
+		c.SetReadDeadline(time.Now().Add(time.Second * 3))
+		n, err = c.Read(buf[:])
+		if err != nil {
+			return nil, err
+		}
+	}
+	if n < len("\xFF\xFF\xFF\xFFD0") {
 		return nil, errors.New("got invalid response")
 	}
 	c.Close()
@@ -216,4 +232,62 @@ func QueryPlayersString(address string) ([]Player, error) {
 		return nil, err
 	}
 	return QueryPlayers(addr)
+}
+
+func QueryRules(address *net.UDPAddr) ([]Rule, error) {
+	c, err := net.DialUDP("udp", nil, address)
+	if err != nil {
+		return nil, err
+	}
+	c.Write([]byte("\xFF\xFF\xFF\xFFV\xFF\xFF\xFF\xFF"))
+	var buf [2 * 1024]byte
+	c.SetReadDeadline(time.Now().Add(time.Second * 3))
+	n, err := c.Read(buf[:])
+	if err != nil {
+		return nil, err
+	}
+	if n == 9 && buf[4] == 'A' {
+		buf[4] = 'V'
+		c.Write(buf[:n])
+		c.SetReadDeadline(time.Now().Add(time.Second * 3))
+		n, err = c.Read(buf[:])
+		if err != nil {
+			return nil, err
+		}
+	}
+	if n < len("\xFF\xFF\xFF\xFFE00") {
+		return nil, errors.New("got invalid response")
+	}
+	c.Close()
+	o := 5 // skip "\xFF\xFF\xFF\xFFE"
+	nr := binary.LittleEndian.Uint16(buf[o:])
+	o += 2
+	rules := make([]Rule, 0, nr)
+	for i := uint16(0); i < nr; i++ {
+		var r Rule
+		nb := bytes.IndexByte(buf[o:], 0)
+		if nb == -1 {
+			return nil, errors.New("got invalid response")
+		}
+		r.Name = string(buf[o : o+nb])
+		o += nb + 1
+		nb = bytes.IndexByte(buf[o:], 0)
+		if nb == -1 {
+			return nil, errors.New("got invalid response")
+		}
+		r.Value = string(buf[o : o+nb])
+		o += nb + 1
+		if len(r.Name) != 0 {
+			rules = append(rules, r)
+		}
+	}
+	return rules, nil
+}
+
+func QueryRulesString(address string) ([]Rule, error) {
+	addr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return nil, err
+	}
+	return QueryRules(addr)
 }
