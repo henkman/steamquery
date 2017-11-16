@@ -13,6 +13,9 @@
 	table.sortable td {
 		padding: 2px;
 	}
+	table tr:nth-of-type(5n) td {
+		border-bottom: 1px solid black;
+	}
 	</style>
 	<script src="sorttable.min.js"></script>
 	<script src="juration.min.js"></script>
@@ -20,57 +23,55 @@
 	window.addEventListener("load", function() {
 		var buref = document.getElementById("refresh");
 		buref.addEventListener("click", function() {
-			{
-				server.updateInfo();
-				var info = server.data.info;
-				if (!info.Name) {
-					alert("could not contact server");
-					return;
-				}
-				document.getElementById("name").innerText = info.Name;
-				document.getElementById("map").innerText = info.Map;
-				document.getElementById("playercount").innerText = info.Players;
+			server.updateInfo();
+			var info = server.data.info;
+			if (!info.Name) {
+				alert("could not contact server");
+				return;
 			}
-			{
-				server.updatePlayers();
-				var players = server.data.players;
-				if (!players.length) {
-					return;
-				}
-				var table = document.querySelector("#players");
-				var tbody = table.querySelector("tbody");
-				tbody.innerHTML = "";
-				for(var i=0; i<players.length; i++) {
-					var d = players[i].Duration;
-					var secs = (d/1000000000) + (d%1000000000)/1000000000;
-					var tr = document.createElement("tr");
-					var td = document.createElement("td");
-					td.textContent = players[i].Name;
-					tr.appendChild(td);
-					
-					td = document.createElement("td");
-					td.textContent = players[i].Score;
-					tr.appendChild(td);
-					
-					td = document.createElement("td");
-					td.textContent = juration.stringify(secs);
-					td.setAttribute("sorttable_customkey", ''+secs);
-					tr.appendChild(td);
-					
-					var td = document.createElement("td");
-					td.textContent = (players[i].Score/secs).toFixed(6);
-					tr.appendChild(td);
-					tbody.appendChild(tr);
-				}
-				var headers = table.querySelectorAll("th");
-				for(var i=0; i<headers.length; i++) {
-					headers[i].className = headers[i].className
-						.replace('sorttable_sorted_reverse','')
-						.replace('sorttable_sorted','');
-				}
-				sorttable.innerSortFunction.apply(headers[3], []);
-				sorttable.reverse(tbody);
+			document.getElementById("name").innerText = info.Name;
+			document.getElementById("map").innerText = info.Map;
+			document.getElementById("count").innerText = info.Players;
+			document.getElementById("maxcount").innerText = info.MaxPlayers;
+			server.updatePlayers();
+			var players = server.data.players;
+			if (!players.length) {
+				return;
 			}
+			players = players.slice(players.length - info.Players);
+			var table = document.querySelector("#players");
+			var tbody = table.querySelector("tbody");
+			tbody.innerHTML = "";
+			for(var i=0; i<players.length; i++) {
+				var d = players[i].Duration;
+				var secs = (d/1000000000) + (d%1000000000)/1000000000;
+				var tr = document.createElement("tr");
+				var td = document.createElement("td");
+				td.textContent = players[i].Name;
+				tr.appendChild(td);
+				
+				td = document.createElement("td");
+				td.textContent = players[i].Score;
+				tr.appendChild(td);
+				
+				td = document.createElement("td");
+				td.textContent = juration.stringify(secs);
+				td.setAttribute("sorttable_customkey", ''+secs);
+				tr.appendChild(td);
+				
+				var td = document.createElement("td");
+				td.textContent = (players[i].Score/secs).toFixed(6);
+				tr.appendChild(td);
+				tbody.appendChild(tr);
+			}
+			var headers = table.querySelectorAll("th");
+			for(var i=0; i<headers.length; i++) {
+				headers[i].className = headers[i].className
+					.replace('sorttable_sorted_reverse','')
+					.replace('sorttable_sorted','');
+			}
+			sorttable.innerSortFunction.apply(headers[3], []);
+			sorttable.reverse(tbody);
 		});
 		setTimeout(function() {
 			buref.click();
@@ -82,7 +83,8 @@
 	<input type="button" id="refresh" value="refresh"><br/>
 	Name: <span id="name"></span><br/>
 	Map: <span id="map"></span><br/>
-	Players: <span id="playercount"></span><br/>
+	Players: <span id="count"></span>/<span id="maxcount"></span>
+	<br/>
 	<table id="players" class="sortable">
 		<thead>
 			<tr>

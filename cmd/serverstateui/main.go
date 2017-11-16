@@ -11,9 +11,10 @@ import (
 )
 
 type Info struct {
-	Name    string
-	Map     string
-	Players int
+	Name       string
+	Map        string
+	Players    int
+	MaxPlayers int
 }
 
 type Server struct {
@@ -63,9 +64,10 @@ func (s *Server) UpdateInfo() {
 		}
 	}
 	s.Info = Info{
-		Name:    owningPlayerName,
-		Map:     p2,
-		Players: numPublicConnections - numOpenPublicConnections,
+		Name:       owningPlayerName,
+		Map:        p2,
+		Players:    numPublicConnections - numOpenPublicConnections,
+		MaxPlayers: numPublicConnections,
 	}
 }
 
@@ -92,8 +94,8 @@ func main() {
 	w := webview.New(webview.Settings{
 		Title:     "server state",
 		URL:       url,
-		Width:     650,
-		Height:    800,
+		Width:     660,
+		Height:    715,
 		Resizable: true,
 	})
 	defer w.Exit()
