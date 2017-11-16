@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>test</title>
+	<style>
+	html, body { margin:0; padding:0; }
+	table.sortable thead {
+	    background-color:#eee;
+	    color:#666666;
+	    font-weight: bold;
+	    cursor: default;
+	}
+	table.sortable td {
+		padding: 2px;
+	}
+	</style>
+	<script src="sorttable.min.js"></script>
+	<script src="juration.min.js"></script>
+	<script>
+	window.addEventListener("load", function() {
+		var buref = document.getElementById("refresh");
+		buref.addEventListener("click", function() {
+			{
+				server.updateInfo();
+				var info = server.data.info;
+				if (!info.Name) {
+					alert("could not contact server");
+					return;
+				}
+				document.getElementById("name").innerText = info.Name;
+				document.getElementById("map").innerText = info.Map;
+				document.getElementById("playercount").innerText = info.Players;
+			}
+			{
+				server.updatePlayers();
+				var players = server.data.players;
+				if (!players.length) {
+					return;
+				}
+				var table = document.querySelector("#players");
+				var tbody = table.querySelector("tbody");
+				tbody.innerHTML = "";
+				for(var i=0; i<players.length; i++) {
+					var d = players[i].Duration;
+					var secs = (d/1000000000) + (d%1000000000)/1000000000;
+					var tr = document.createElement("tr");
+					var td = document.createElement("td");
+					td.textContent = players[i].Name;
+					tr.appendChild(td);
+					
+					td = document.createElement("td");
+					td.textContent = players[i].Score;
+					tr.appendChild(td);
+					
+					td = document.createElement("td");
+					td.textContent = juration.stringify(secs);
+					td.setAttribute("sorttable_customkey", ''+secs);
+					tr.appendChild(td);
+					
+					var td = document.createElement("td");
+					td.textContent = (players[i].Score/secs).toFixed(6);
+					tr.appendChild(td);
+					tbody.appendChild(tr);
+				}
+				var headers = table.querySelectorAll("th");
+				for(var i=0; i<headers.length; i++) {
+					headers[i].className = headers[i].className
+						.replace('sorttable_sorted_reverse','')
+						.replace('sorttable_sorted','');
+				}
+				sorttable.innerSortFunction.apply(headers[3], []);
+				sorttable.reverse(tbody);
+			}
+		});
+		setTimeout(function() {
+			buref.click();
+		}, 20);
+	});
+	</script>
+</head>
+<body>
+	<input type="button" id="refresh" value="refresh"><br/>
+	Name: <span id="name"></span><br/>
+	Map: <span id="map"></span><br/>
+	Players: <span id="playercount"></span><br/>
+	<table id="players" class="sortable">
+		<thead>
+			<tr>
+				<th class="sorttable_alpha">Name</th>
+				<th class="sorttable_numeric">Score</th>
+				<th class="sorttable_numeric">Online</th>
+				<th class="sorttable_numeric">Score/Second</th>
+			</tr>
+		</thead>
+    	<tbody></tbody>
+	</table>
+</body>
+</html>
