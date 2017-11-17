@@ -22,6 +22,13 @@
 	<script>
 	window.addEventListener("load", function() {
 		var buref = document.getElementById("refresh");
+		document.addEventListener("keydown", function(e) {
+			var F5 = 116;
+		    if (e.keyCode == F5) {
+				e.preventDefault();
+				buref.click();
+			}
+		});
 		buref.addEventListener("click", function() {
 			server.updateInfo();
 			var info = server.data.info;
