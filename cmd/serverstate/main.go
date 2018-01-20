@@ -58,10 +58,11 @@ func main() {
 		flag.Usage()
 		return
 	}
-	r, err := steamquery.QueryInfoString(_server)
+	r, ping, err := steamquery.QueryInfoString(_server)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Ping:", ping)
 	fmt.Println("Protocol:", r.Protocol)
 	fmt.Println("Name:", r.Name)
 	fmt.Println("Map:", r.Map)
@@ -86,7 +87,7 @@ func main() {
 	fmt.Println("GameID:", r.GameID)
 	if !_dontprintplayer {
 		fmt.Println("Players: ")
-		ps, err := steamquery.QueryPlayersString(_server)
+		ps, _, err := steamquery.QueryPlayersString(_server)
 		if err != nil {
 			log.Fatal(err)
 		}
