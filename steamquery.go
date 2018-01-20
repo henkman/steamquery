@@ -71,10 +71,10 @@ func QueryInfo(address *net.UDPAddr) (Info, error) {
 	var buf [2 * 1024]byte
 	c.SetReadDeadline(time.Now().Add(time.Second * 3))
 	n, err := c.Read(buf[:])
+	c.Close()
 	if err != nil {
 		return Info{}, err
 	}
-	c.Close()
 	if n < 17 {
 		return Info{}, errors.New("got invalid response")
 	}
@@ -186,6 +186,7 @@ func QueryPlayers(address *net.UDPAddr) ([]Player, error) {
 	c.SetReadDeadline(time.Now().Add(time.Second * 3))
 	n, err := c.Read(buf[:])
 	if err != nil {
+		c.Close()
 		return nil, err
 	}
 	if n == 9 && buf[4] == 'A' {
@@ -194,13 +195,14 @@ func QueryPlayers(address *net.UDPAddr) ([]Player, error) {
 		c.SetReadDeadline(time.Now().Add(time.Second * 3))
 		n, err = c.Read(buf[:])
 		if err != nil {
+			c.Close()
 			return nil, err
 		}
 	}
+	c.Close()
 	if n < len("\xFF\xFF\xFF\xFFD0") {
 		return nil, errors.New("got invalid response")
 	}
-	c.Close()
 	o := 5 // skip "\xFF\xFF\xFF\xFFD"
 	np := buf[o]
 	o++
@@ -244,6 +246,7 @@ func QueryRules(address *net.UDPAddr) ([]Rule, error) {
 	c.SetReadDeadline(time.Now().Add(time.Second * 3))
 	n, err := c.Read(buf[:])
 	if err != nil {
+		c.Close()
 		return nil, err
 	}
 	if n == 9 && buf[4] == 'A' {
@@ -252,13 +255,14 @@ func QueryRules(address *net.UDPAddr) ([]Rule, error) {
 		c.SetReadDeadline(time.Now().Add(time.Second * 3))
 		n, err = c.Read(buf[:])
 		if err != nil {
+			c.Close()
 			return nil, err
 		}
 	}
+	c.Close()
 	if n < len("\xFF\xFF\xFF\xFFE00") {
 		return nil, errors.New("got invalid response")
 	}
-	c.Close()
 	o := 5 // skip "\xFF\xFF\xFF\xFFE"
 	nr := binary.LittleEndian.Uint16(buf[o:])
 	o += 2
