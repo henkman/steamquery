@@ -67,7 +67,7 @@ func QueryInfo(address *net.UDPAddr) (Info, time.Duration, error) {
 	if err != nil {
 		return Info{}, time.Duration(0), err
 	}
-	var buf [2 * 1024]byte
+	var buf [8 * 1024]byte
 	c.SetReadDeadline(time.Now().Add(time.Second * 3))
 	before := time.Now()
 	c.Write([]byte("\xFF\xFF\xFF\xFFTSource Engine Query\x00"))
@@ -245,7 +245,7 @@ func QueryRules(address *net.UDPAddr) ([]Rule, time.Duration, error) {
 	if err != nil {
 		return nil, time.Duration(0), err
 	}
-	var buf [2 * 1024]byte
+	var buf [8 * 1024]byte
 	c.SetReadDeadline(time.Now().Add(time.Second * 3))
 	before := time.Now()
 	c.Write([]byte("\xFF\xFF\xFF\xFFV\xFF\xFF\xFF\xFF"))
