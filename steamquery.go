@@ -70,13 +70,25 @@ func QueryInfo(address *net.UDPAddr) (Info, time.Duration, error) {
 	var buf [8 * 1024]byte
 	c.SetReadDeadline(time.Now().Add(time.Second * 3))
 	before := time.Now()
-	c.Write([]byte("\xFF\xFF\xFF\xFFTSource Engine Query\x00"))
+	const REQ = "\xFF\xFF\xFF\xFFTSource Engine Query\x00"
+	c.Write([]byte(REQ))
 	n, err := c.Read(buf[:])
 	ping := time.Since(before)
-	c.Close()
 	if err != nil {
 		return Info{}, time.Duration(0), err
 	}
+	if n == 9 && buf[4] == 'A' {
+		var challenge [4]byte
+		copy(challenge[:], buf[5:])
+		c.Write(append([]byte(REQ), challenge[:]...))
+		c.SetReadDeadline(time.Now().Add(time.Second * 3))
+		n, err = c.Read(buf[:])
+		if err != nil {
+			c.Close()
+			return Info{}, time.Duration(0), err
+		}
+	}
+	c.Close()
 	if n < 17 {
 		return Info{}, time.Duration(0), errors.New("got invalid response")
 	}
