@@ -68,7 +68,7 @@ func QueryInfo(address *net.UDPAddr) (Info, time.Duration, error) {
 		return Info{}, time.Duration(0), err
 	}
 	var buf [8 * 1024]byte
-	c.SetReadDeadline(time.Now().Add(time.Second * 3))
+	c.SetReadDeadline(time.Now().Add(time.Second * 5))
 	before := time.Now()
 	const REQ = "\xFF\xFF\xFF\xFFTSource Engine Query\x00"
 	c.Write([]byte(REQ))
@@ -81,7 +81,7 @@ func QueryInfo(address *net.UDPAddr) (Info, time.Duration, error) {
 		var challenge [4]byte
 		copy(challenge[:], buf[5:])
 		c.Write(append([]byte(REQ), challenge[:]...))
-		c.SetReadDeadline(time.Now().Add(time.Second * 3))
+		c.SetReadDeadline(time.Now().Add(time.Second * 5))
 		n, err = c.Read(buf[:])
 		if err != nil {
 			c.Close()
@@ -195,7 +195,7 @@ func QueryPlayers(address *net.UDPAddr) ([]Player, time.Duration, error) {
 	if err != nil {
 		return nil, time.Duration(0), err
 	}
-	c.SetReadDeadline(time.Now().Add(time.Second * 3))
+	c.SetReadDeadline(time.Now().Add(time.Second * 5))
 	var buf [2 * 1024]byte
 	before := time.Now()
 	c.Write([]byte("\xFF\xFF\xFF\xFFU\xFF\xFF\xFF\xFF"))
@@ -208,7 +208,7 @@ func QueryPlayers(address *net.UDPAddr) ([]Player, time.Duration, error) {
 	if n == 9 && buf[4] == 'A' {
 		buf[4] = 'U'
 		c.Write(buf[:n])
-		c.SetReadDeadline(time.Now().Add(time.Second * 3))
+		c.SetReadDeadline(time.Now().Add(time.Second * 5))
 		n, err = c.Read(buf[:])
 		if err != nil {
 			c.Close()
@@ -258,7 +258,7 @@ func QueryRules(address *net.UDPAddr) ([]Rule, time.Duration, error) {
 		return nil, time.Duration(0), err
 	}
 	var buf [8 * 1024]byte
-	c.SetReadDeadline(time.Now().Add(time.Second * 3))
+	c.SetReadDeadline(time.Now().Add(time.Second * 5))
 	before := time.Now()
 	c.Write([]byte("\xFF\xFF\xFF\xFFV\xFF\xFF\xFF\xFF"))
 	n, err := c.Read(buf[:])
@@ -270,7 +270,7 @@ func QueryRules(address *net.UDPAddr) ([]Rule, time.Duration, error) {
 	if n == 9 && buf[4] == 'A' {
 		buf[4] = 'V'
 		c.Write(buf[:n])
-		c.SetReadDeadline(time.Now().Add(time.Second * 3))
+		c.SetReadDeadline(time.Now().Add(time.Second * 5))
 		n, err = c.Read(buf[:])
 		if err != nil {
 			c.Close()
